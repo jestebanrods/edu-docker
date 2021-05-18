@@ -1,0 +1,50 @@
+version: "3.8"
+
+services:
+  mysql:
+    image: mysql:5.7
+    container_name: jestebanrods_mysql
+    restart: always
+    ports:
+      - 3306:3306
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d
+      - ./database:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: "1234567890"
+
+  wordpress:
+    image: wordpress:5.7.2-php8.0-apache
+    container_name: jestebanrods_wordpress
+    restart: always
+    depends_on:
+      - mysql
+    ports:
+      - 8080:80
+    volumes:
+      - ./data:/var/www/html
+    environment:
+      WORDPRESS_DB_HOST: mysql
+      WORDPRESS_DB_USER: wordpress
+      WORDPRESS_DB_PASSWORD: "VeZdF7Qd2E"
+      WORDPRESS_DB_NAME: wordpress
+
+  backup:
+    image: aveltens/wordpress-backup:latest
+    container_name: jestebanrods_backups
+    restart: always
+    depends_on:
+      - wordpress
+    volumes:
+      - ./backups:/backups
+    volumes_from:
+      - wordpress
+    depends_on:
+      - wordpress
+    environment:
+      MYSQL_ENV_MYSQL_DATABASE: wordpress
+      MYSQL_ENV_MYSQL_USER: wordpress
+      MYSQL_ENV_MYSQL_PASSWORD: "VeZdF7Qd2E"
+      MYSQL_PORT_3306_TCP_PORT: 3306
+      CLEANUP_OLDER_THAN: 5
+      BACKUP_TIME: "0 2 * * *"
