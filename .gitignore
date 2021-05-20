@@ -1,4 +1,3 @@
-**/data
-**/database
+**/*data
 **/backups
 **/.DS_Store
