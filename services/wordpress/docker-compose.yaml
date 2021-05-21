@@ -5,7 +5,6 @@ services:
     image: mariadb:10.5.10
     container_name: jestebanrods_mariadb
     restart: always
-    command: --character-set-server=utf8mb4 --collation-server=utf8mb4_unicode_ci
     ports:
       - 3307:3306
     volumes:
@@ -13,22 +12,36 @@ services:
       - ./mariadb_data:/var/lib/mysql
     environment:
       - MARIADB_ROOT_PASSWORD=1234567890
+    healthcheck:
+      test: exit 0
+        interval: 60s
+        timeout: 5s
+        retries: 5
+        start_period: 60s
 
   wordpress:
-    image: wordpress:5.7.2-php8.0-apache
+    image: bitnami/wordpress:5.7.2
     container_name: jestebanrods_wordpress
     restart: always
     depends_on:
-      - mariadb
+      mariadb:
+        condition: service_healthy
     ports:
-      - 8080:80
+      - 8080:8080
     volumes:
-      - ./wordpress_data:/var/www/html
+      - ./wordpress_data:/bitnami/wordpress
     environment:
-      WORDPRESS_DB_HOST: mariadb
-      WORDPRESS_DB_USER: wordpress
-      WORDPRESS_DB_PASSWORD: "VeZdF7Qd2E"
-      WORDPRESS_DB_NAME: wordpress
+      - WORDPRESS_DATABASE_HOST=mariadb
+      - WORDPRESS_DATABASE_USER=wordpress
+      - WORDPRESS_DATABASE_PASSWORD=VeZdF7Qd2E
+      - WORDPRESS_DATABASE_NAME=wordpress
+      - WORDPRESS_FIRST_NAME=Jossie
+      - WORDPRESS_LAST_NAME=Rodriguez
+      - WORDPRESS_BLOG_NAME=Academy
+      - WORDPRESS_USERNAME=superadmin
+      - WORDPRESS_PASSWORD=1234567890
+      - WORDPRESS_EMAIL=jestebanrods@gmail.com
+      # - BITNAMI_DEBUG=true
 
   backup:
     image: aveltens/wordpress-backup:latest
@@ -54,22 +67,22 @@ services:
     image: bitnami/moodle:3.10.3
     container_name: jestebanrods_moodle
     restart: always
+    depends_on:
+      mariadb:
+        condition: service_healthy
     ports:
       - 8081:8080
-      # - 443:8443
     environment:
       - MOODLE_DATABASE_HOST=mariadb
       - MOODLE_DATABASE_PORT_NUMBER=3306
       - MOODLE_DATABASE_USER=moodle
       - MOODLE_DATABASE_NAME=moodle
       - MOODLE_DATABASE_PASSWORD=VeZdF7Qd2E
-      - MOODLE_PASSWORD=1234567890
       - MOODLE_USERNAME=superadmin
+      - MOODLE_PASSWORD=1234567890
       - MOODLE_EMAIL=jestebanrods@gmail.com
-      - MOODLE_SITE_NAME=academy
+      - MOODLE_SITE_NAME=Academy
       # - BITNAMI_DEBUG=true
     volumes:
       - './moodle_data:/bitnami/moodle'
       - './moodledata_data:/bitnami/moodledata'
-    depends_on:
-      - mariadb
