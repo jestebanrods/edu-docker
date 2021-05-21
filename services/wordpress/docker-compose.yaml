@@ -2,22 +2,24 @@ version: "3.8"
 
 services:
   mariadb:
-    image: mariadb:10.5.10
+    image: bitnami/mariadb:10.5.10
     container_name: jestebanrods_mariadb
     restart: always
     ports:
       - 3307:3306
     volumes:
       - ./init:/docker-entrypoint-initdb.d
-      - ./mariadb_data:/var/lib/mysql
-    environment:
-      - MARIADB_ROOT_PASSWORD=1234567890
+      - ./mariadb_data:/bitnami/mariadb
     healthcheck:
-      test: exit 0
-        interval: 60s
-        timeout: 5s
-        retries: 5
-        start_period: 60s
+      test: ["CMD", "/opt/bitnami/scripts/mariadb/healthcheck.sh"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    environment:
+      - MARIADB_CHARACTER_SET=utf8mb4
+      - MARIADB_COLLATE=utf8mb4_unicode_ci
+      - MARIADB_ROOT_PASSWORD=1234567890
+      # - BITNAMI_DEBUG=true
 
   wordpress:
     image: bitnami/wordpress:5.7.2
@@ -30,6 +32,11 @@ services:
       - 8080:8080
     volumes:
       - ./wordpress_data:/bitnami/wordpress
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
     environment:
       - WORDPRESS_DATABASE_HOST=mariadb
       - WORDPRESS_DATABASE_USER=wordpress
@@ -50,18 +57,16 @@ services:
     depends_on:
       - wordpress
     volumes:
-      - ./backups:/backups
+      - ./wordpress_backups:/backups
     volumes_from:
       - wordpress
-    depends_on:
-      - wordpress
     environment:
-      MYSQL_ENV_MYSQL_DATABASE: wordpress
-      MYSQL_ENV_MYSQL_USER: wordpress
-      MYSQL_ENV_MYSQL_PASSWORD: "VeZdF7Qd2E"
-      MYSQL_PORT_3306_TCP_PORT: 3306
-      CLEANUP_OLDER_THAN: 5
-      BACKUP_TIME: "0 2 * * *"
+      - MYSQL_ENV_MYSQL_DATABASE=wordpress
+      - MYSQL_ENV_MYSQL_USER=wordpress
+      - MYSQL_ENV_MYSQL_PASSWORD=VeZdF7Qd2E
+      - MYSQL_PORT_3306_TCP_PORT=3306
+      - CLEANUP_OLDER_THAN=5
+      - BACKUP_TIME=0 2 * * *
 
   moodle:
     image: bitnami/moodle:3.10.3
@@ -72,6 +77,14 @@ services:
         condition: service_healthy
     ports:
       - 8081:8080
+    volumes:
+      - './moodle_data:/bitnami/moodle'
+      - './moodledata_data:/bitnami/moodledata'
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
     environment:
       - MOODLE_DATABASE_HOST=mariadb
       - MOODLE_DATABASE_PORT_NUMBER=3306
@@ -83,6 +96,3 @@ services:
       - MOODLE_EMAIL=jestebanrods@gmail.com
       - MOODLE_SITE_NAME=Academy
       # - BITNAMI_DEBUG=true
-    volumes:
-      - './moodle_data:/bitnami/moodle'
-      - './moodledata_data:/bitnami/moodledata'
