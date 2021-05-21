@@ -22,7 +22,7 @@ services:
       # - BITNAMI_DEBUG=true
 
   wordpress:
-    image: bitnami/wordpress:5.7.2
+    image: bitnami/wordpress-nginx:5.7.2
     container_name: jestebanrods_wordpress
     restart: always
     depends_on:
