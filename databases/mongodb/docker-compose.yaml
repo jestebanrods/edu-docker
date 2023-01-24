@@ -1,0 +1,14 @@
+version: "3.8"
+
+services:
+  mongo:
+    image: mongo:4.0
+    container_name: jestebanrods_mongodb
+    restart: always
+    ports:
+      - 27017:27017
+    volumes:
+      - ./data:/etc/mongo
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root
+      MONGO_INITDB_ROOT_PASSWORD: "1234567890"

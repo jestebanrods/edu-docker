@@ -1,0 +1,11 @@
+version: "3.8"
+
+services:
+  mongo:
+    image: redis:5.0.7-alpine
+    container_name: jestebanrods_redis
+    restart: always
+    ports:
+      - "6379:6379"
+    volumes:
+      - ./data:/usr/local/etc/redis

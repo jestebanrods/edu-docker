@@ -1,0 +1,57 @@
+version: "3.8"
+
+services:
+  nginx-proxy:
+    image: "jwilder/nginx-proxy:alpine"
+    restart: always
+    ports:
+      - 80:80
+      - 443:443
+    volumes:
+      - "/var/run/docker.sock:/tmp/docker.sock:ro"
+      - "/home/ubuntu/app/certs:/etc/nginx/certs:ro"
+      - "/etc/nginx/vhost.d"
+      - "/usr/share/nginx/html"
+    labels:
+      - "com.github.jrcs.letsencrypt_nginx_proxy_companion.nginx_proxy"
+
+  letsencrypt:
+    image: jrcs/letsencrypt-nginx-proxy-companion:2.1.0
+    restart: always
+    volumes:
+      - "/home/ubuntu/app/certs:/etc/nginx/certs:rw"
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+    volumes_from:
+      - nginx-proxy:rw
+    environment:
+      - DEFAULT_EMAIL=jestebanrods@gmail.com
+
+  www:
+    image: nginx:1.20.0-alpine
+    restart: always
+    volumes:
+      - "/home/ubuntu/app/www:/usr/share/nginx/html:ro"
+    environment:
+      - VIRTUAL_HOST=www.jestebanrods.ga
+      - LETSENCRYPT_HOST=www.jestebanrods.ga
+
+  www2:
+    image: nginx:1.20.0-alpine
+    restart: always
+    volumes:
+      - "/home/ubuntu/app/www2:/usr/share/nginx/html:ro"
+    environment:
+      - VIRTUAL_HOST=pecosa.jestebanrods.ga
+      - LETSENCRYPT_HOST=pecosa.jestebanrods.ga
+
+  www3:
+    image: crccheck/hello-world:latest
+    environment:
+      - VIRTUAL_HOST=test.jestebanrods.ga
+      - LETSENCRYPT_HOST=test.jestebanrods.ga
+
+  whoami:
+    image: jwilder/whoami:latest
+    environment:
+      - VIRTUAL_HOST=whoami.jestebanrods.ga
+      - LETSENCRYPT_HOST=whoami.jestebanrods.ga

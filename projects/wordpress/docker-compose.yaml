@@ -1,0 +1,98 @@
+version: "3.8"
+
+services:
+  mariadb:
+    image: bitnami/mariadb:10.5.10
+    container_name: jestebanrods_mariadb
+    restart: always
+    ports:
+      - 3307:3306
+    volumes:
+      - ./init:/docker-entrypoint-initdb.d
+      - ./mariadb_data:/bitnami/mariadb
+    healthcheck:
+      test: ["CMD", "/opt/bitnami/scripts/mariadb/healthcheck.sh"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    environment:
+      - MARIADB_CHARACTER_SET=utf8mb4
+      - MARIADB_COLLATE=utf8mb4_unicode_ci
+      - MARIADB_ROOT_PASSWORD=1234567890
+      # - BITNAMI_DEBUG=true
+
+  wordpress:
+    image: bitnami/wordpress-nginx:5.7.2
+    container_name: jestebanrods_wordpress
+    restart: always
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    ports:
+      - 8080:8080
+    volumes:
+      - ./wordpress_data:/bitnami/wordpress
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    environment:
+      - WORDPRESS_DATABASE_HOST=mariadb
+      - WORDPRESS_DATABASE_USER=wordpress
+      - WORDPRESS_DATABASE_PASSWORD=VeZdF7Qd2E
+      - WORDPRESS_DATABASE_NAME=wordpress
+      - WORDPRESS_FIRST_NAME=Jossie
+      - WORDPRESS_LAST_NAME=Rodriguez
+      - WORDPRESS_BLOG_NAME=Academy
+      - WORDPRESS_USERNAME=superadmin
+      - WORDPRESS_PASSWORD=1234567890
+      - WORDPRESS_EMAIL=jestebanrods@gmail.com
+      # - BITNAMI_DEBUG=true
+
+  backup:
+    image: aveltens/wordpress-backup:latest
+    container_name: jestebanrods_backups
+    restart: always
+    depends_on:
+      - wordpress
+    volumes:
+      - ./wordpress_backups:/backups
+    volumes_from:
+      - wordpress
+    environment:
+      - MYSQL_ENV_MYSQL_DATABASE=wordpress
+      - MYSQL_ENV_MYSQL_USER=wordpress
+      - MYSQL_ENV_MYSQL_PASSWORD=VeZdF7Qd2E
+      - MYSQL_PORT_3306_TCP_PORT=3306
+      - CLEANUP_OLDER_THAN=5
+      - BACKUP_TIME=0 2 * * *
+
+  moodle:
+    image: bitnami/moodle:3.10.3
+    container_name: jestebanrods_moodle
+    restart: always
+    depends_on:
+      mariadb:
+        condition: service_healthy
+    ports:
+      - 8081:8080
+    volumes:
+      - './moodle_data:/bitnami/moodle'
+      - './moodledata_data:/bitnami/moodledata'
+    healthcheck:
+      test: ["CMD", "curl", "-fsS", "http://localhost:8080"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+    environment:
+      - MOODLE_DATABASE_HOST=mariadb
+      - MOODLE_DATABASE_PORT_NUMBER=3306
+      - MOODLE_DATABASE_USER=moodle
+      - MOODLE_DATABASE_NAME=moodle
+      - MOODLE_DATABASE_PASSWORD=VeZdF7Qd2E
+      - MOODLE_USERNAME=superadmin
+      - MOODLE_PASSWORD=1234567890
+      - MOODLE_EMAIL=jestebanrods@gmail.com
+      - MOODLE_SITE_NAME=Academy
+      # - BITNAMI_DEBUG=true
